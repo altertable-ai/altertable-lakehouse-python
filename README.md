@@ -37,10 +37,7 @@ print(result.rows)
 ### Append
 
 ```python
-from altertable_lakehouse.models import AppendRequestSingle, AppendPayload
-
-req = AppendRequestSingle(Single=AppendPayload(data={"col1": "val1"}))
-res = client.append(catalog="my_cat", schema="my_schema", table="my_table", data=req)
+res = client.append(catalog="my_cat", schema="my_schema", table="my_table", data={"col1": "val1"})
 print(res.ok)
 ```
 
