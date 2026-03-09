@@ -1,0 +1,9 @@
+{
+    "packages": {
+      ".": {
+        "release-type": "python",
+        "package-name": "altertable-lakehouse",
+        "version-file": "pyproject.toml"
+      }
+    }
+}
