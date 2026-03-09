@@ -1,3 +1,4 @@
+# type: ignore
 import os
 import pytest
 from testcontainers.core.container import DockerContainer
