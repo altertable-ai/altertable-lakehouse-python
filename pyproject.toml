@@ -1,0 +1,19 @@
+[tool.poetry]
+name = "altertable-lakehouse"
+version = "0.1.0"
+description = "Official Python SDK for Altertable Lakehouse API"
+authors = ["Altertable <hello@altertable.ai>"]
+readme = "README.md"
+packages = [{include = "altertable_lakehouse", from = "src"}]
+
+[tool.poetry.dependencies]
+python = "^3.9"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^8.0.0"
+ruff = "^0.3.0"
+mypy = "^1.8.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
