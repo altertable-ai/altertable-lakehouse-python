@@ -48,9 +48,8 @@ def test_upload(client):
         pass
 
 def test_append(client):
-    req = models.AppendRequestSingle(Single=models.AppendPayload(data={"a": 1}))
     try:
-        client.append(catalog="cat", schema="sch", table="tbl", data=req)
+        client.append(catalog="cat", schema="sch", table="tbl", data={"a": 1})
     except errors.BadRequestError:
         pass
 

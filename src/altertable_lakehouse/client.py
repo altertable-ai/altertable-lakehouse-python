@@ -72,7 +72,7 @@ class Client:
             raise BadRequestError(response.text, response.status_code)
         raise ApiError(response.text, response.status_code)
 
-    def append(self, catalog: str, schema: str, table: str, data: Union[AppendRequestSingle, AppendRequestBatch, Dict[str, Any]]) -> AppendResponse:
+    def append(self, catalog: str, schema: str, table: str, data: Union[AppendRequestSingle, AppendRequestBatch]) -> AppendResponse:
         try:
             payload = data.model_dump() if hasattr(data, "model_dump") else data
             res = self._client.post(

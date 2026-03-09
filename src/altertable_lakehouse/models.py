@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, Optional, Literal
+from typing import Any, Dict, List, Optional, Literal, Union
 from enum import Enum
 from pydantic import BaseModel, Field
 
@@ -18,14 +18,9 @@ class UploadMode(str, Enum):
     UPSERT = "upsert"
     OVERWRITE = "overwrite"
 
-class AppendPayload(BaseModel):
-    data: Dict[str, Any]
-
-class AppendRequestSingle(BaseModel):
-    Single: AppendPayload
-
-class AppendRequestBatch(BaseModel):
-    Batch: List[AppendPayload]
+AppendRequestSingle = Dict[str, Any]
+AppendRequestBatch = List[Dict[str, Any]]
+AppendRequest = Union[AppendRequestSingle, AppendRequestBatch]
 
 class AppendResponse(BaseModel):
     ok: bool
