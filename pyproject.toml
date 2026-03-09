@@ -8,11 +8,15 @@ packages = [{include = "altertable_lakehouse", from = "src"}]
 
 [tool.poetry.dependencies]
 python = "^3.9"
+httpx = "^0.28.1"
+dataclasses-json = "^0.6.7"
+pydantic = "^2.12.5"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.0.0"
 ruff = "^0.3.0"
 mypy = "^1.8.0"
+testcontainers = "<4.0"
 
 [build-system]
 requires = ["poetry-core"]
