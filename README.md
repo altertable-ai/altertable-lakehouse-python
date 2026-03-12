@@ -1,78 +1,73 @@
 # Altertable Lakehouse Python SDK
 
-Official Python SDK for the Altertable Lakehouse API.
+You can use this SDK to query and ingest data in Altertable Lakehouse from Python applications.
 
-## Installation
+## Install
 
 ```bash
 pip install altertable-lakehouse
 ```
 
-## Usage
-
-### Initialization
+## Quick start
 
 ```python
 from altertable_lakehouse import Client
+from altertable_lakehouse.models import QueryRequest
 
 client = Client(username="your_username", password="your_password")
+metadata, rows = client.query(QueryRequest(statement="SELECT 1 AS ok"))
+for row in rows:
+    print(row)
 ```
+
+## API reference
+
+### Initialization
+
+`Client(username: str | None = None, password: str | None = None, **options)`
+
+Creates a client authenticated with Basic Auth credentials or token.
 
 ### Querying
 
-```python
-from altertable_lakehouse.models import QueryRequest
+`query(request: QueryRequest)` streams query rows.
 
-# Stream rows (good for large datasets)
-req = QueryRequest(statement="SELECT * FROM my_table")
-metadata, row_iterator = client.query(req)
-for row in row_iterator:
-    print(row)
+`query_all(request: QueryRequest)` returns all rows in memory.
 
-# Accumulate all rows in memory
-result = client.query_all(req)
-print(result.rows)
+### Ingestion
+
+`append(catalog: str, schema: str, table: str, data: dict | list[dict])` appends rows.
+
+`upload(catalog: str, schema: str, table: str, format: UploadFormat, mode: UploadMode, content: bytes)` uploads a file payload.
+
+### Query management
+
+`get_query(query_id: str)` returns query status.
+
+`cancel_query(query_id: str, session_id: str)` cancels a running query.
+
+`validate(statement: str)` validates SQL without execution.
+
+## Configuration
+
+| Option | Type | Default | Description |
+|---|---|---|---|
+| `username` | `str \| None` | `None` | Basic Auth username (or `ALTERTABLE_USERNAME`). |
+| `password` | `str \| None` | `None` | Basic Auth password (or `ALTERTABLE_PASSWORD`). |
+| `basic_auth_token` | `str \| None` | `None` | Base64 `username:password` token (or env var). |
+| `base_url` | `str` | `"https://api.altertable.ai"` | API base URL. |
+| `timeout` | `int` | `10` | Request timeout in seconds. |
+
+## Development
+
+Prerequisites: Python 3.9+ and `pip`.
+
+```bash
+pip install -e ".[dev]"
+pytest
+ruff check .
 ```
 
-### Append
+## License
 
-```python
-res = client.append(catalog="my_cat", schema="my_schema", table="my_table", data={"col1": "val1"})
-print(res.ok)
-```
-
-### Upload
-
-```python
-from altertable_lakehouse.models import UploadFormat, UploadMode
-
-with open("data.csv", "rb") as f:
-    client.upload(
-        catalog="my_cat", 
-        schema="my_schema", 
-        table="my_table", 
-        format=UploadFormat.CSV, 
-        mode=UploadMode.APPEND, 
-        content=f.read()
-    )
-```
-
-### Validate Query
-
-```python
-res = client.validate("SELECT * FROM non_existent")
-print(res.valid)
-print(res.connections_errors)
-```
-
-### Query Log & Cancellation
-
-```python
-# Get query status
-log_res = client.get_query("query_uuid_here")
-print(log_res.progress)
-
-# Cancel a query
-cancel_res = client.cancel_query("query_uuid_here", "session_id_here")
-print(cancel_res.cancelled)
-```
+See [LICENSE](LICENSE).
