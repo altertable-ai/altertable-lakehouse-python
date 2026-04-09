@@ -1,6 +1,8 @@
 # type: ignore
 import os
+import ssl
 import pytest
+import httpx
 from testcontainers.core.container import DockerContainer
 from altertable_lakehouse import Client, models, errors
 
@@ -17,7 +19,7 @@ def mock_server():
     
     port = container.get_exposed_port(15000)
     host = container.get_container_host_ip()
-    os.environ["ALTERTABLE_MOCK_PORT"] = port
+    os.environ["ALTERTABLE_MOCK_PORT"] = str(port)
     os.environ["ALTERTABLE_MOCK_HOST"] = host
     
     yield container
@@ -68,3 +70,35 @@ def test_cancel_query(client):
         client.cancel_query("00000000-0000-0000-0000-000000000000", "session-id")
     except errors.ApiError as e:
         assert e.status_code == 404
+
+def test_client_forwards_verify_false(monkeypatch, base_url):
+    captured = {}
+
+    class DummyHttpxClient:
+        def __init__(self, **kwargs):
+            captured.update(kwargs)
+
+    monkeypatch.setattr(httpx, "Client", DummyHttpxClient)
+
+    Client(base_url=base_url, username="testuser", password="testpass", verify=False)
+
+    assert captured["verify"] is False
+
+def test_client_forwards_ssl_context(monkeypatch, base_url):
+    captured = {}
+    ssl_context = ssl.create_default_context()
+
+    class DummyHttpxClient:
+        def __init__(self, **kwargs):
+            captured.update(kwargs)
+
+    monkeypatch.setattr(httpx, "Client", DummyHttpxClient)
+
+    Client(
+        base_url=base_url,
+        username="testuser",
+        password="testpass",
+        verify=ssl_context,
+    )
+
+    assert captured["verify"] is ssl_context
