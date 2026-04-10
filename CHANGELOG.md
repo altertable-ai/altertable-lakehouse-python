@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.3.0](https://github.com/altertable-ai/altertable-lakehouse-python/compare/altertable-lakehouse-v0.2.0...altertable-lakehouse-v0.3.0) (2026-04-10)
+
+
+### Features
+
+* **client:** allow configuring TLS verification ([#8](https://github.com/altertable-ai/altertable-lakehouse-python/issues/8)) ([0356ca3](https://github.com/altertable-ai/altertable-lakehouse-python/commit/0356ca3df0268f0b07d78fa2d14e44079850a13e)), closes [#7](https://github.com/altertable-ai/altertable-lakehouse-python/issues/7)
+
 ## [0.2.0](https://github.com/altertable-ai/altertable-lakehouse-python/compare/altertable-lakehouse-v0.1.0...altertable-lakehouse-v0.2.0) (2026-03-09)
 
 
