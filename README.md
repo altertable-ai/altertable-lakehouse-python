@@ -16,6 +16,9 @@ pip install altertable-lakehouse
 from altertable_lakehouse import Client
 
 client = Client(username="your_username", password="your_password")
+
+# Disable TLS certificate verification for development only
+client = Client(username="your_username", password="your_password", verify=False)
 ```
 
 ### Querying

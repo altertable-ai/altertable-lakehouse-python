@@ -1,6 +1,7 @@
 import os
 import json
 import base64
+import ssl
 import httpx
 from typing import Any, Dict, Iterator, Optional, Union, Tuple, NoReturn
 from .models import (
@@ -23,7 +24,8 @@ class Client:
         password: Optional[str] = None,
         token: Optional[str] = None,
         timeout: float = 30.0,
-        user_agent_suffix: Optional[str] = None
+        user_agent_suffix: Optional[str] = None,
+        verify: Union[bool, ssl.SSLContext] = True,
     ):
         self.base_url = base_url.rstrip("/")
         self.timeout = timeout
@@ -50,6 +52,7 @@ class Client:
         self._client = httpx.Client(
             base_url=self.base_url,
             timeout=self.timeout,
+            verify=verify,
             headers={
                 "Authorization": f"Basic {auth_token}",
                 "User-Agent": ua
