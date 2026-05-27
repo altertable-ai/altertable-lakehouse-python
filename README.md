@@ -28,20 +28,34 @@ from altertable_lakehouse.models import QueryRequest
 
 # Stream rows (good for large datasets)
 req = QueryRequest(statement="SELECT * FROM my_table")
-metadata, row_iterator = client.query(req)
+metadata, columns, row_iterator = client.query(req)
+print(metadata.values)
+print(columns)
 for row in row_iterator:
     print(row)
 
 # Accumulate all rows in memory
 result = client.query_all(req)
+print(result.metadata.values)
+print(result.columns)
 print(result.rows)
 ```
 
 ### Append
 
 ```python
-res = client.append(catalog="my_cat", schema="my_schema", table="my_table", data={"col1": "val1"})
+res = client.append(
+    catalog="my_cat",
+    schema="my_schema",
+    table="my_table",
+    data={"col1": "val1"},
+    sync=False,
+)
 print(res.ok)
+
+if res.task_id:
+    task = client.get_task(res.task_id)
+    print(task.status)
 ```
 
 ### Upload
@@ -63,7 +77,9 @@ with open("data.csv", "rb") as f:
 ### Validate Query
 
 ```python
-res = client.validate("SELECT * FROM non_existent")
+from altertable_lakehouse.models import ValidateRequest
+
+res = client.validate(ValidateRequest(statement="SELECT * FROM non_existent"))
 print(res.valid)
 print(res.connections_errors)
 ```
@@ -78,4 +94,14 @@ print(log_res.progress)
 # Cancel a query
 cancel_res = client.cancel_query("query_uuid_here", "session_id_here")
 print(cancel_res.cancelled)
+```
+
+### Autocomplete
+
+```python
+from altertable_lakehouse.models import AutocompleteRequest
+
+res = client.autocomplete(AutocompleteRequest(statement="SEL", max_suggestions=5))
+print(res.statement)
+print([suggestion.suggestion for suggestion in res.suggestions])
 ```

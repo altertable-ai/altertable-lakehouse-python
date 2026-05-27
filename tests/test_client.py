@@ -41,7 +41,9 @@ def client(base_url):
 def test_query_all(client):
     req = models.QueryRequest(statement="SELECT 1 as num")
     res = client.query_all(req)
-    assert len(res.rows) >= 0
+    assert "statement" in res.metadata.values
+    assert isinstance(res.columns, list)
+    assert isinstance(res.rows, list)
 
 def test_upload(client):
     try:
@@ -51,12 +53,12 @@ def test_upload(client):
 
 def test_append(client):
     try:
-        client.append(catalog="cat", schema="sch", table="tbl", data={"a": 1})
+        client.append(catalog="cat", schema="sch", table="tbl", data={"a": 1}, sync=False)
     except errors.BadRequestError:
         pass
 
 def test_validate(client):
-    res = client.validate("SELECT 1")
+    res = client.validate(models.ValidateRequest(statement="SELECT 1"))
     assert res.valid is not None
 
 
@@ -73,11 +75,26 @@ def test_get_query(client):
     except errors.ApiError as e:
         assert e.status_code == 404
 
+def test_get_task(client):
+    try:
+        client.get_task("00000000-0000-0000-0000-000000000000")
+    except errors.ApiError as e:
+        assert e.status_code == 404
+
 def test_cancel_query(client):
     try:
         client.cancel_query("00000000-0000-0000-0000-000000000000", "session-id")
     except errors.ApiError as e:
         assert e.status_code == 404
+
+def test_query_returns_stream_metadata_and_columns(client):
+    metadata, columns, rows = client.query(models.QueryRequest(statement="SELECT 1"))
+    row_values = list(rows)
+
+    assert metadata.values["statement"] == "SELECT 1"
+    assert metadata.values["query_id"]
+    assert columns == ["1"]
+    assert row_values == [[1]]
 
 def test_client_forwards_verify_false(monkeypatch, base_url):
     captured = {}
