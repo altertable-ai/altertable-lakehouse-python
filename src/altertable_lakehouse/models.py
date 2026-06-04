@@ -11,12 +11,6 @@ class ComputeSize(str, Enum):
     XL = "XL"
 
 
-class UploadFormat(str, Enum):
-    CSV = "csv"
-    JSON = "json"
-    PARQUET = "parquet"
-
-
 class UploadMode(str, Enum):
     CREATE = "create"
     APPEND = "append"

@@ -61,16 +61,16 @@ if res.task_id:
 ### Upload
 
 ```python
-from altertable_lakehouse.models import UploadFormat, UploadMode
+from altertable_lakehouse.models import UploadMode
 
 with open("data.csv", "rb") as f:
     client.upload(
         catalog="my_cat", 
         schema="my_schema", 
         table="my_table", 
-        format=UploadFormat.CSV, 
         mode=UploadMode.APPEND, 
-        content=f.read()
+        content=f.read(),
+        content_type="text/csv"
     )
 ```
 

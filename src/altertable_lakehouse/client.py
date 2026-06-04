@@ -16,7 +16,6 @@ from .models import (
     ValidateResponse,
     AutocompleteRequest,
     AutocompleteResponse,
-    UploadFormat,
     UploadMode,
     QueryMetadata,
     QueryResult,
@@ -124,26 +123,26 @@ class Client:
         catalog: str,
         schema: str,
         table: str,
-        format: UploadFormat,
-        mode: UploadMode,
         content: bytes,
+        mode: Optional[UploadMode] = None,
         primary_key: Optional[str] = None,
+        content_type: str = "application/octet-stream",
     ) -> None:
         params = {
             "catalog": catalog,
             "schema": schema,
             "table": table,
-            "format": format.value,
-            "mode": mode.value,
         }
+        if mode is not None:
+            params["mode"] = mode.value
         if primary_key:
             params["primary_key"] = primary_key
         try:
             res = self._client.post(
-                "/upload",
+                "/upsert",
                 params=params,
                 content=content,
-                headers={"Content-Type": "application/octet-stream"},
+                headers={"Content-Type": content_type},
             )
             self._check_response(res)
         except httpx.RequestError as e:

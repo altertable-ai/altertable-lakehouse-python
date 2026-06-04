@@ -47,7 +47,7 @@ def test_query_all(client):
 
 def test_upload(client):
     try:
-        client.upload(catalog="cat", schema="sch", table="tbl", format=models.UploadFormat.JSON, mode=models.UploadMode.APPEND, content=b'{"a":1}')
+        client.upload(catalog="cat", schema="sch", table="tbl", mode=models.UploadMode.APPEND, content=b'{"a":1}', content_type="application/json")
     except errors.BadRequestError:
         pass
 
