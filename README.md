@@ -58,19 +58,18 @@ if res.task_id:
     print(task.status)
 ```
 
-### Upload
+### Upsert
 
 ```python
-from altertable_lakehouse.models import UploadMode
+from altertable_lakehouse.models import UpsertMode
 
 with open("data.csv", "rb") as f:
-    client.upload(
+    client.upsert(
         catalog="my_cat", 
         schema="my_schema", 
         table="my_table", 
-        mode=UploadMode.APPEND, 
-        content=f.read(),
-        content_type="text/csv"
+        mode=UpsertMode.APPEND, 
+        content=f.read()
     )
 ```
 

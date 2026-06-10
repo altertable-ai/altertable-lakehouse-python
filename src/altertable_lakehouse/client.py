@@ -16,7 +16,7 @@ from .models import (
     ValidateResponse,
     AutocompleteRequest,
     AutocompleteResponse,
-    UploadMode,
+    UpsertMode,
     QueryMetadata,
     QueryResult,
 )
@@ -118,15 +118,14 @@ class Client:
         except httpx.RequestError as e:
             self._handle_error(e)
 
-    def upload(
+    def upsert(
         self,
         catalog: str,
         schema: str,
         table: str,
         content: bytes,
-        mode: Optional[UploadMode] = None,
+        mode: Optional[UpsertMode] = None,
         primary_key: Optional[str] = None,
-        content_type: str = "application/octet-stream",
     ) -> None:
         params = {
             "catalog": catalog,
@@ -142,7 +141,6 @@ class Client:
                 "/upsert",
                 params=params,
                 content=content,
-                headers={"Content-Type": content_type},
             )
             self._check_response(res)
         except httpx.RequestError as e:

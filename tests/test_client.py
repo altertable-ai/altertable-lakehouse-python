@@ -45,9 +45,9 @@ def test_query_all(client):
     assert isinstance(res.columns, list)
     assert isinstance(res.rows, list)
 
-def test_upload(client):
+def test_upsert(client):
     try:
-        client.upload(catalog="cat", schema="sch", table="tbl", mode=models.UploadMode.APPEND, content=b'{"a":1}', content_type="application/json")
+        client.upsert(catalog="cat", schema="sch", table="tbl", mode=models.UpsertMode.APPEND, content=b'{"a":1}')
     except errors.BadRequestError:
         pass
 
