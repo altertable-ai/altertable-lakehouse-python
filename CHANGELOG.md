@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.4.0](https://github.com/altertable-ai/altertable-lakehouse-python/compare/altertable-lakehouse-v0.3.1...altertable-lakehouse-v0.4.0) (2026-07-24)
+
+
+### Features
+
+* **api:** add upload endpoint and align upsert ([#21](https://github.com/altertable-ai/altertable-lakehouse-python/issues/21)) ([969e54d](https://github.com/altertable-ai/altertable-lakehouse-python/commit/969e54deccdbcf20e1325a8106988cd5a0da09cf))
+
+
+### Documentation
+
+* sync community documents ([#19](https://github.com/altertable-ai/altertable-lakehouse-python/issues/19)) ([4a21043](https://github.com/altertable-ai/altertable-lakehouse-python/commit/4a21043496bec41fa6687e62f1d55a8c93f30bf3))
+
 ## [Unreleased]
 
 ### Added
