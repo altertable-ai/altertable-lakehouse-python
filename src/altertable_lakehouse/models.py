@@ -11,10 +11,9 @@ class ComputeSize(str, Enum):
     XL = "XL"
 
 
-class UpsertMode(str, Enum):
+class UploadMode(str, Enum):
     CREATE = "create"
     APPEND = "append"
-    UPSERT = "upsert"
     OVERWRITE = "overwrite"
 
 

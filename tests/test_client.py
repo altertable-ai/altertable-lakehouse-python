@@ -1,6 +1,7 @@
 # type: ignore
 import os
 import ssl
+from io import BytesIO
 import pytest
 import httpx
 from testcontainers.core.container import DockerContainer
@@ -45,11 +46,96 @@ def test_query_all(client):
     assert isinstance(res.columns, list)
     assert isinstance(res.rows, list)
 
-def test_upsert(client):
-    try:
-        client.upsert(catalog="cat", schema="sch", table="tbl", mode=models.UpsertMode.APPEND, content=b'{"a":1}')
-    except errors.BadRequestError:
-        pass
+def test_upsert_sends_primary_key_without_unsupported_mode(client):
+    captured = {}
+
+    def handler(request):
+        captured["params"] = dict(request.url.params)
+        return httpx.Response(204, request=request)
+
+    client._client = httpx.Client(
+        base_url=client.base_url,
+        transport=httpx.MockTransport(handler),
+    )
+
+    client.upsert(
+        catalog="cat",
+        schema="sch",
+        table="tbl",
+        primary_key="id",
+        content=b'{"id":1}',
+    )
+
+    assert captured["params"] == {
+        "catalog": "cat",
+        "schema": "sch",
+        "table": "tbl",
+        "primary_key": "id",
+    }
+    assert "mode" not in captured["params"]
+
+
+def test_upsert_requires_primary_key(client):
+    with pytest.raises(TypeError, match="primary_key"):
+        client.upsert(catalog="cat", schema="sch", table="tbl", content=b'{"id":1}')
+
+
+def test_upload_sends_required_parameters_and_content_type(client):
+    captured = {}
+
+    def handler(request):
+        captured["params"] = dict(request.url.params)
+        captured["content_type"] = request.headers.get("content-type")
+        captured["content"] = request.content
+        return httpx.Response(200, request=request)
+
+    client._client = httpx.Client(
+        base_url=client.base_url,
+        transport=httpx.MockTransport(handler),
+    )
+
+    client.upload(
+        catalog="cat",
+        schema="sch",
+        table="tbl",
+        mode=models.UploadMode.CREATE,
+        content=BytesIO(b"id,name\n1,Alice\n"),
+        content_type="text/csv",
+    )
+
+    assert captured["params"] == {
+        "catalog": "cat",
+        "schema": "sch",
+        "table": "tbl",
+        "mode": "create",
+    }
+    assert captured["content_type"] == "text/csv"
+    assert captured["content"] == b"id,name\n1,Alice\n"
+
+
+def test_upload_omits_content_type_and_surfaces_api_errors(client):
+    captured = {}
+
+    def handler(request):
+        captured["content_type"] = request.headers.get("content-type")
+        return httpx.Response(400, text="invalid upload", request=request)
+
+    client._client = httpx.Client(
+        base_url=client.base_url,
+        transport=httpx.MockTransport(handler),
+    )
+
+    with pytest.raises(errors.BadRequestError, match="invalid upload"):
+        client.upload(
+            catalog="cat",
+            schema="sch",
+            table="tbl",
+            mode=models.UploadMode.APPEND,
+            content=b'{"id":1}',
+        )
+
+    assert captured["content_type"] is None
+
 
 def test_append(client):
     try:
