@@ -16,7 +16,6 @@ from .models import (
     ValidateResponse,
     AutocompleteRequest,
     AutocompleteResponse,
-    UpsertMode,
     QueryMetadata,
     QueryResult,
 )
@@ -124,18 +123,14 @@ class Client:
         schema: str,
         table: str,
         content: bytes,
-        mode: Optional[UpsertMode] = None,
-        primary_key: Optional[str] = None,
+        primary_key: str,
     ) -> None:
         params = {
             "catalog": catalog,
             "schema": schema,
             "table": table,
+            "primary_key": primary_key,
         }
-        if mode is not None:
-            params["mode"] = mode.value
-        if primary_key:
-            params["primary_key"] = primary_key
         try:
             res = self._client.post(
                 "/upsert",

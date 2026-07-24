@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [Unreleased]
+
+### Fixed
+
+* Require `primary_key` for upserts and stop sending the unsupported `mode` query parameter.
+
 ## [0.3.1](https://github.com/altertable-ai/altertable-lakehouse-python/compare/altertable-lakehouse-v0.3.0...altertable-lakehouse-v0.3.1) (2026-06-30)
 
 

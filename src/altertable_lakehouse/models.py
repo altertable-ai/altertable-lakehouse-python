@@ -11,13 +11,6 @@ class ComputeSize(str, Enum):
     XL = "XL"
 
 
-class UpsertMode(str, Enum):
-    CREATE = "create"
-    APPEND = "append"
-    UPSERT = "upsert"
-    OVERWRITE = "overwrite"
-
-
 class TaskStatus(str, Enum):
     PENDING = "pending"
     COMPLETED = "completed"

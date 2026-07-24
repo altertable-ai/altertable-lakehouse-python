@@ -61,15 +61,13 @@ if res.task_id:
 ### Upsert
 
 ```python
-from altertable_lakehouse.models import UpsertMode
-
 with open("data.csv", "rb") as f:
     client.upsert(
-        catalog="my_cat", 
-        schema="my_schema", 
-        table="my_table", 
-        mode=UpsertMode.APPEND, 
-        content=f.read()
+        catalog="my_cat",
+        schema="my_schema",
+        table="my_table",
+        primary_key="id",
+        content=f.read(),
     )
 ```
 
