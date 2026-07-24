@@ -71,6 +71,22 @@ with open("data.csv", "rb") as f:
     )
 ```
 
+### Upload
+
+```python
+from altertable_lakehouse.models import UploadMode
+
+with open("data.csv", "rb") as f:
+    client.upload(
+        catalog="my_cat",
+        schema="my_schema",
+        table="my_table",
+        mode=UploadMode.CREATE,
+        content=f,
+        content_type="text/csv",
+    )
+```
+
 ### Validate Query
 
 ```python

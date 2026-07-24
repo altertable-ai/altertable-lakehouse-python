@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Added
+
+* Add `Client.upload` with typed upload modes and support for file streams.
+
 ### Fixed
 
 * Require `primary_key` for upserts and stop sending the unsupported `mode` query parameter.

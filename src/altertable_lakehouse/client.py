@@ -3,7 +3,7 @@ import json
 import base64
 import ssl
 import httpx
-from typing import Any, Iterator, Optional, Union, Tuple, NoReturn
+from typing import Any, BinaryIO, Iterable, Iterator, Optional, Union, Tuple, NoReturn
 from .models import (
     AppendRequestSingle,
     AppendRequestBatch,
@@ -18,6 +18,7 @@ from .models import (
     AutocompleteResponse,
     QueryMetadata,
     QueryResult,
+    UploadMode,
 )
 from .errors import (
     AuthError,
@@ -136,6 +137,34 @@ class Client:
                 "/upsert",
                 params=params,
                 content=content,
+            )
+            self._check_response(res)
+        except httpx.RequestError as e:
+            self._handle_error(e)
+
+    def upload(
+        self,
+        catalog: str,
+        schema: str,
+        table: str,
+        mode: UploadMode,
+        content: Union[bytes, BinaryIO, Iterable[bytes]],
+        content_type: Optional[str] = None,
+    ) -> None:
+        """Upload CSV, JSON, or Parquet bytes using the requested table mode."""
+        params = {
+            "catalog": catalog,
+            "schema": schema,
+            "table": table,
+            "mode": mode.value,
+        }
+        headers = {"Content-Type": content_type} if content_type else None
+        try:
+            res = self._client.post(
+                "/upload",
+                params=params,
+                content=content,
+                headers=headers,
             )
             self._check_response(res)
         except httpx.RequestError as e:

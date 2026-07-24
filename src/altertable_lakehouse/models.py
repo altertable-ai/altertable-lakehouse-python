@@ -11,6 +11,12 @@ class ComputeSize(str, Enum):
     XL = "XL"
 
 
+class UploadMode(str, Enum):
+    CREATE = "create"
+    APPEND = "append"
+    OVERWRITE = "overwrite"
+
+
 class TaskStatus(str, Enum):
     PENDING = "pending"
     COMPLETED = "completed"
