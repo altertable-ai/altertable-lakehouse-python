@@ -8,7 +8,7 @@ Only the latest minor release receives security patches.
 
 **Do not open a public issue.**
 
-Email security@altertable.ai with:
+Email <security@altertable.ai> with:
 
 1. Description of the vulnerability
 2. Steps to reproduce
