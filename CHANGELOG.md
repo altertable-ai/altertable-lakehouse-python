@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.3.2](https://github.com/altertable-ai/altertable-lakehouse-python/compare/altertable-lakehouse-v0.3.1...altertable-lakehouse-v0.3.2) (2026-07-24)
+
+
+### Documentation
+
+* sync community documents ([#19](https://github.com/altertable-ai/altertable-lakehouse-python/issues/19)) ([4a21043](https://github.com/altertable-ai/altertable-lakehouse-python/commit/4a21043496bec41fa6687e62f1d55a8c93f30bf3))
+
 ## [0.3.1](https://github.com/altertable-ai/altertable-lakehouse-python/compare/altertable-lakehouse-v0.3.0...altertable-lakehouse-v0.3.1) (2026-06-30)
 
 
