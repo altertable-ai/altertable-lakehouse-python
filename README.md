@@ -39,6 +39,9 @@ result = client.query_all(req)
 print(result.metadata.values)
 print(result.columns)
 print(result.rows)
+
+# Optional source dialect and response representation
+req = QueryRequest(statement="SELECT 1", dialect="postgres", format="jsonl")
 ```
 
 ### Append
@@ -67,9 +70,15 @@ with open("data.csv", "rb") as f:
         schema="my_schema",
         table="my_table",
         primary_key="id",
+        cursor_field="updated_at",
         content=f.read(),
+        content_type="text/csv",
     )
 ```
+
+`cursor_field` is optional. On a primary-key collision, the row with the
+higher cursor wins; ties leave the stored row unchanged. Composite cursor
+fields compare left to right, and `NULL` sorts lower than any non-null value.
 
 ### Upload
 
@@ -81,11 +90,14 @@ with open("data.csv", "rb") as f:
         catalog="my_cat",
         schema="my_schema",
         table="my_table",
-        mode=UploadMode.CREATE,
+        mode=UploadMode.CREATE_APPEND,
         content=f,
         content_type="text/csv",
     )
 ```
+
+`UploadMode.CREATE_APPEND` creates the table when it is absent and appends when
+it already exists.
 
 ### Validate Query
 

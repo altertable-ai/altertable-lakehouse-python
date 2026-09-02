@@ -18,11 +18,13 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
-* Add `Client.upload` with typed upload modes and support for file streams.
+* Add query dialect and response-format options, including all v0.13 compute sizes.
+* Add `create_append` uploads and cursor-aware upserts.
+* Surface backend NDJSON query stream failures as typed `QueryError` exceptions.
 
 ### Fixed
 
-* Require `primary_key` for upserts and stop sending the unsupported `mode` query parameter.
+* Continue requiring `primary_key` for upserts and omit the unsupported `mode` query parameter.
 
 ## [0.3.1](https://github.com/altertable-ai/altertable-lakehouse-python/compare/altertable-lakehouse-v0.3.0...altertable-lakehouse-v0.3.1) (2026-06-30)
 

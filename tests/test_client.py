@@ -1,5 +1,6 @@
 # type: ignore
 import os
+import json
 import ssl
 from io import BytesIO
 import pytest
@@ -75,6 +76,33 @@ def test_upsert_sends_primary_key_without_unsupported_mode(client):
     assert "mode" not in captured["params"]
 
 
+def test_upsert_forwards_cursor_field_and_content_type(client):
+    captured = {}
+
+    def handler(request):
+        captured["params"] = dict(request.url.params)
+        captured["content_type"] = request.headers.get("content-type")
+        return httpx.Response(204, request=request)
+
+    client._client = httpx.Client(
+        base_url=client.base_url,
+        transport=httpx.MockTransport(handler),
+    )
+
+    client.upsert(
+        catalog="cat",
+        schema="sch",
+        table="tbl",
+        primary_key="account_id,event_id",
+        cursor_field="updated_at,sequence",
+        content=b'[{"account_id":1}]',
+        content_type="application/json",
+    )
+
+    assert captured["params"]["cursor_field"] == "updated_at,sequence"
+    assert captured["content_type"] == "application/json"
+
+
 def test_upsert_requires_primary_key(client):
     with pytest.raises(TypeError, match="primary_key"):
         client.upsert(catalog="cat", schema="sch", table="tbl", content=b'{"id":1}')
@@ -111,6 +139,29 @@ def test_upload_sends_required_parameters_and_content_type(client):
     }
     assert captured["content_type"] == "text/csv"
     assert captured["content"] == b"id,name\n1,Alice\n"
+
+
+def test_upload_supports_create_append(client):
+    captured = {}
+
+    def handler(request):
+        captured["params"] = dict(request.url.params)
+        return httpx.Response(200, request=request)
+
+    client._client = httpx.Client(
+        base_url=client.base_url,
+        transport=httpx.MockTransport(handler),
+    )
+
+    client.upload(
+        catalog="cat",
+        schema="sch",
+        table="tbl",
+        mode=models.UploadMode.CREATE_APPEND,
+        content=b"id,name\n1,Alice\n",
+    )
+
+    assert captured["params"]["mode"] == "create_append"
 
 
 def test_upload_omits_content_type_and_surfaces_api_errors(client):
@@ -181,6 +232,95 @@ def test_query_returns_stream_metadata_and_columns(client):
     assert metadata.values["query_id"]
     assert columns == ["1"]
     assert row_values == [[1]]
+
+
+def test_query_forwards_v013_options_and_rejects_auto_with_session(client):
+    captured = {}
+
+    def handler(request):
+        captured["payload"] = json.loads(request.content)
+        return httpx.Response(
+            200,
+            text='{"query_id":"query"}\n[]\n',
+            headers={"content-type": "application/x-ndjson"},
+            request=request,
+        )
+
+    client._client = httpx.Client(
+        base_url=client.base_url,
+        transport=httpx.MockTransport(handler),
+    )
+
+    metadata, columns, rows = client.query(
+        models.QueryRequest(
+            statement="SELECT 1",
+            compute_size=models.ComputeSize.XXL,
+            dialect="postgres",
+            format=models.QueryFormat.JSONL,
+        )
+    )
+
+    assert metadata.values["query_id"] == "query"
+    assert columns == []
+    assert list(rows) == []
+    assert captured["payload"] == {
+        "statement": "SELECT 1",
+        "compute_size": "2XL",
+        "dialect": "postgres",
+        "format": "jsonl",
+    }
+
+    with pytest.raises(errors.ConfigurationError, match="AUTO"):
+        client.query(
+            models.QueryRequest(
+                statement="SELECT 1",
+                compute_size=models.ComputeSize.AUTO,
+                session_id="existing-session",
+            )
+        )
+
+
+def test_query_raises_typed_error_from_ndjson_stream(client):
+    def handler(request):
+        return httpx.Response(
+            200,
+            text='{"query_id":"query"}\n[{"name":"id","type":"INTEGER"}]\n{"error":"worker failed"}\n',
+            headers={"content-type": "application/x-ndjson"},
+            request=request,
+        )
+
+    client._client = httpx.Client(
+        base_url=client.base_url,
+        transport=httpx.MockTransport(handler),
+    )
+
+    _, _, rows = client.query(models.QueryRequest(statement="SELECT 1"))
+
+    with pytest.raises(errors.QueryError, match="worker failed") as exc_info:
+        list(rows)
+
+    assert exc_info.value.line_index == 3
+    assert exc_info.value.raw_content == '{"error": "worker failed"}'
+
+
+def test_query_raises_typed_error_before_columns(client):
+    def handler(request):
+        return httpx.Response(
+            200,
+            text='{"query_id":"query"}\n{"error":"schema failed"}\n',
+            headers={"content-type": "application/x-ndjson"},
+            request=request,
+        )
+
+    client._client = httpx.Client(
+        base_url=client.base_url,
+        transport=httpx.MockTransport(handler),
+    )
+
+    with pytest.raises(errors.QueryError, match="schema failed") as exc_info:
+        client.query(models.QueryRequest(statement="SELECT 1"))
+
+    assert exc_info.value.line_index == 2
 
 def test_client_forwards_verify_false(monkeypatch, base_url):
     captured = {}

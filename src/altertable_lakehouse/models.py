@@ -9,11 +9,23 @@ class ComputeSize(str, Enum):
     M = "M"
     L = "L"
     XL = "XL"
+    XXL = "2XL"
+    XXXL = "3XL"
+    XXXXL = "4XL"
+    AUTO = "AUTO"
+
+
+class QueryFormat(str, Enum):
+    DEFAULT = "default"
+    CSV = "csv"
+    JSONL = "jsonl"
+    PARQUET = "parquet"
 
 
 class UploadMode(str, Enum):
     CREATE = "create"
     APPEND = "append"
+    CREATE_APPEND = "create_append"
     OVERWRITE = "overwrite"
 
 
@@ -55,11 +67,13 @@ class QueryRequest(BaseModel):
     schema_: Optional[str] = Field(default=None, alias="schema")
     session_id: Optional[str] = None
     compute_size: Optional[ComputeSize] = None
+    dialect: Optional[str] = None
     sanitize: Optional[bool] = None
     limit: Optional[int] = None
     offset: Optional[int] = None
     timezone: Optional[str] = None
     ephemeral: Optional[bool] = None
+    format: Optional[QueryFormat] = None
     visible: Optional[bool] = None
     requested_by: Optional[str] = None
     query_id: Optional[str] = None

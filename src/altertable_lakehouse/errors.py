@@ -20,6 +20,15 @@ class ParseError(AltertableLakehouseError):
         self.line_index = line_index
         self.raw_content = raw_content
 
+
+class QueryError(AltertableLakehouseError):
+    """A backend error emitted inside a successful query NDJSON stream."""
+
+    def __init__(self, message: str, line_index: int, raw_content: str):
+        super().__init__(f"Query stream error at line {line_index}: {message}")
+        self.line_index = line_index
+        self.raw_content = raw_content
+
 class ApiError(AltertableLakehouseError):
     def __init__(self, message: str, status_code: int):
         super().__init__(f"{status_code}: {message}")
