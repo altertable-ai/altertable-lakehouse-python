@@ -6,19 +6,15 @@ app = marimo.App(width="medium", sql_output="pandas")
 
 @app.cell
 def _():
-    import os
-
     import ibis
     import marimo as mo
 
-    return ibis, mo, os
+    return ibis, mo
 
 
 @app.cell
-def _(ibis, os):
-    connection = ibis.altertable.connect(
-        base_url=os.environ.get("ALTERTABLE_BASE_URL", "https://api.altertable.ai")
-    )
+def _(ibis):
+    connection = ibis.altertable.connect()
     return (connection,)
 
 
