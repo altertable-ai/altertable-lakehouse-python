@@ -8,7 +8,7 @@ Official Python SDK for the Altertable Lakehouse API.
 pip install altertable-lakehouse
 ```
 
-### Ibis (Python 3.10+, Ibis 12)
+### Ibis
 
 ```bash
 pip install 'altertable-lakehouse[ibis]'
