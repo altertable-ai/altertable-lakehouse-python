@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.5.0](https://github.com/altertable-ai/altertable-lakehouse-python/compare/altertable-lakehouse-v0.4.0...altertable-lakehouse-v0.5.0) (2026-10-05)
+
+
+### Features
+
+* add optional ibis integration ([#27](https://github.com/altertable-ai/altertable-lakehouse-python/issues/27)) ([4ef9002](https://github.com/altertable-ai/altertable-lakehouse-python/commit/4ef9002b42cd6d57afc0edf40359768375719810))
+
 ## [0.4.0](https://github.com/altertable-ai/altertable-lakehouse-python/compare/altertable-lakehouse-v0.3.1...altertable-lakehouse-v0.4.0) (2026-07-24)
 
 
