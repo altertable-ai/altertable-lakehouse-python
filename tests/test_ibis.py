@@ -95,3 +95,23 @@ def test_unsupported_operations_fail_before_query(connection: Any) -> None:
         backend.create_table("new_table", schema={"n": "int32"})
 
     assert requests == []
+
+
+@pytest.mark.parametrize(
+    "sql_type",
+    ["UHUGEINT", "INTERVAL", "GEOMETRY", "STRUCT(duration INTERVAL)"],
+)
+def test_unsupported_result_types_fail_before_data_query(
+    connection: Any, sql_type: str
+) -> None:
+    backend, requests, responses = connection
+    responses.append(
+        (["column_name", "column_type", "null"], [["value", sql_type, "YES"]])
+    )
+    table = backend.sql("SELECT value FROM records")
+
+    with pytest.raises(ibis.common.exceptions.UnsupportedOperationError, match="Cast"):
+        table.to_pyarrow()
+
+    assert len(requests) == 1
+    assert json.loads(requests[0].content)["statement"].startswith("DESCRIBE ")

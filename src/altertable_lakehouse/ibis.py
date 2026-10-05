@@ -7,6 +7,7 @@ if sys.version_info < (3, 10):
     raise ImportError("The Altertable Ibis backend requires Python 3.10 or newer.")
 
 try:
+    import ibis.expr.datatypes as dt
     import ibis.expr.operations as ops
     import ibis.expr.schema as sch
     import ibis.expr.types as ir
@@ -148,6 +149,8 @@ class Backend(SQLBackend):
             raise UnsupportedOperationError(
                 "Altertable does not support Ibis memtables. Upload data with Client.upload."
             )
+        for dtype in expr.as_table().schema().types:
+            _check_result_type(dtype)
 
     def _register_in_memory_table(self, op: ops.InMemoryTable) -> None:
         raise UnsupportedOperationError("Altertable does not support Ibis memtables.")
@@ -203,3 +206,19 @@ class Backend(SQLBackend):
             frame = reader.read_all().to_pandas(integer_object_nulls=True)
         frame = PandasData.convert_table(frame, expr.as_table().schema())
         return expr.__pandas_result__(frame)
+
+
+def _check_result_type(dtype: dt.DataType) -> None:
+    if isinstance(dtype, (dt.Unknown, dt.Interval, dt.GeoSpatial)):
+        raise UnsupportedOperationError(
+            f"Altertable Ibis results do not support {dtype}. "
+            "Cast it to a supported type in SQL before executing."
+        )
+    if dtype.is_array():
+        _check_result_type(dtype.value_type)
+    elif dtype.is_map():
+        _check_result_type(dtype.key_type)
+        _check_result_type(dtype.value_type)
+    elif dtype.is_struct():
+        for child in dtype.types:
+            _check_result_type(child)
