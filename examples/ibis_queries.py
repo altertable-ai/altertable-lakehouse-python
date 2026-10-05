@@ -1,5 +1,3 @@
-"""Run with ALTERTABLE_USERNAME/PASSWORD or ALTERTABLE_BASIC_AUTH_TOKEN set."""
-
 import os
 
 import ibis

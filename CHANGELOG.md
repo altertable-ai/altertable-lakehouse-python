@@ -18,7 +18,7 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
-* Add an optional Ibis backend for querying the lakehouse through the Python SDK.
+* Add an optional Ibis backend with native Parquet results through `Client.query_parquet`.
 * Surface errors received during NDJSON query streaming as `QueryError`.
 * Add `Client.upload` with typed upload modes and support for file streams.
 

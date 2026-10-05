@@ -285,3 +285,21 @@ class Client:
         metadata, columns, iterator = self.query(request)
         rows = list(iterator)
         return QueryResult(metadata=metadata, columns=columns, rows=rows)
+
+    def query_parquet(self, request: QueryRequest) -> bytes:
+        payload = request.model_dump(exclude_none=True, by_alias=True)
+        payload["format"] = "parquet"
+        try:
+            response = self._client.post(
+                "/query", json=payload, headers={"Accept": "application/parquet"}
+            )
+            self._check_response(response)
+            content_type = response.headers.get("content-type", "").split(";")[0].strip()
+            if content_type != "application/parquet":
+                raise ApiError(
+                    f"Expected Parquet query results, received {content_type!r}",
+                    response.status_code,
+                )
+            return response.content
+        except httpx.RequestError as exc:
+            self._handle_error(exc)

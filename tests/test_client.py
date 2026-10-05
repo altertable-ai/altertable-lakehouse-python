@@ -229,15 +229,19 @@ def test_ibis_remote_query_shapes_and_precision(client):
     )
 
     frame = table.execute()
+    series = table.n.execute()
     column = table.n.to_pyarrow()
     scalar = table.amount.max().to_pyarrow()
+    batches = list(table.to_pyarrow_batches(chunk_size=2))
 
     assert isinstance(frame, pd.DataFrame)
     assert frame.n.tolist() == [1, 2, 3]
+    assert series.tolist() == [1, 2, 3]
     assert frame.amount.tolist() == [Decimal(amount)] * 3
     assert isinstance(column, (pa.Array, pa.ChunkedArray))
     assert column.to_pylist() == [1, 2, 3]
     assert scalar.as_py() == Decimal(amount)
+    assert [batch.num_rows for batch in batches] == [2, 1]
     assert table.n.sum().execute() == 6
     assert table.filter(table.n < 0).to_pyarrow().schema == table.schema().to_pyarrow()
     assert table.filter(table.n < 0).execute().empty
@@ -282,15 +286,21 @@ def test_ibis_remote_join_aggregate_window_and_parameters(client):
     assert result.position.tolist() == [0, 1]
 
 
-def test_ibis_remote_temporal_and_null_values(client):
+def test_ibis_remote_arrow_types(client):
     ibis = pytest.importorskip("ibis")
     import datetime
+    import json
+    from decimal import Decimal
     import pandas as pd
 
     backend = ibis.altertable.from_connection(client)
     table = backend.sql(
         "SELECT DATE '2026-01-01' AS day, TIMESTAMPTZ '2026-01-01 01:02:03+00' AS moment, "
-        "[1, NULL]::INTEGER[] AS items, {'name': 'one', 'n': 1} AS record, NULL::INTEGER AS missing"
+        "[1, NULL]::INTEGER[] AS items, {'name': 'one', 'n': 1} AS record, NULL::INTEGER AS missing, "
+        "['12345678901234567890.123456789'::DECIMAL(38,9), NULL] AS amounts, "
+        "TIMESTAMP_NS '2026-01-01 01:02:03.123456789' AS precise, "
+        "JSON '{\"ok\":true}' AS payload, TIME '01:02:03.123456' AS clock, "
+        "'\\x00\\xFF'::BLOB AS raw, MAP {'k': 1} AS mapping"
     )
 
     result = table.to_pyarrow().to_pylist()[0]
@@ -300,6 +310,30 @@ def test_ibis_remote_temporal_and_null_values(client):
     assert result["items"] == [1, None]
     assert result["record"] == {"name": "one", "n": 1}
     assert result["missing"] is None
+    assert result["amounts"] == [Decimal("12345678901234567890.123456789"), None]
+    assert result["precise"] == pd.Timestamp("2026-01-01 01:02:03.123456789")
+    assert json.loads(result["payload"]) == {"ok": True}
+    assert result["clock"] == datetime.time(1, 2, 3, 123456)
+    assert result["raw"] == b"\x00\xff"
+    assert result["mapping"] == [("k", 1)]
+
+
+def test_ibis_remote_nullable_integers_keep_precision(client):
+    ibis = pytest.importorskip("ibis")
+    import pandas as pd
+
+    backend = ibis.altertable.from_connection(client)
+    number = 9007199254740993
+    table = backend.sql(
+        f"SELECT * FROM (VALUES ({number}::BIGINT, [{number}::BIGINT, NULL]), "
+        "(NULL, NULL)) AS numbers(n, items)"
+    )
+
+    result = table.execute()
+
+    assert result.n.iloc[0] == number
+    assert result["items"].iloc[0] == [number, None]
+    assert pd.isna(result.n.iloc[1])
 
 
 def test_ibis_describe_does_not_execute_data_and_preserves_query_errors(client):
@@ -308,5 +342,5 @@ def test_ibis_describe_does_not_execute_data_and_preserves_query_errors(client):
 
     table = backend.sql("SELECT error('ibis execution failed') AS value")
 
-    with pytest.raises(errors.QueryError, match="ibis execution failed"):
+    with pytest.raises(errors.ApiError, match="ibis execution failed"):
         table.execute()

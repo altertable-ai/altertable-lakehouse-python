@@ -1,28 +1,23 @@
-"""Optional Ibis SQL backend using the synchronous Lakehouse HTTP client."""
-
 from __future__ import annotations
 
-import datetime
-import json
 import sys
-from decimal import Decimal
 from typing import Any, Mapping, Optional, Union
 
 if sys.version_info < (3, 10):
     raise ImportError("The Altertable Ibis backend requires Python 3.10 or newer.")
 
 try:
-    import ibis.expr.datatypes as dt
     import ibis.expr.operations as ops
     import ibis.expr.schema as sch
     import ibis.expr.types as ir
-    import pandas as pd
     import pyarrow as pa
+    import pyarrow.parquet as pq
     import sqlglot as sg
     from ibis.backends.sql import SQLBackend
     from ibis.backends.sql.compilers.duckdb import DuckDBCompiler
     from ibis.common.exceptions import UnsupportedOperationError
     from ibis.formats.pandas import PandasData
+    from ibis.formats.pyarrow import PyArrowData
 except ImportError as exc:
     raise ImportError(
         "Install the Ibis backend with: pip install 'altertable-lakehouse[ibis]'"
@@ -180,26 +175,17 @@ class Backend(SQLBackend):
             raise ValueError("chunk_size must be positive")
         self._run_pre_execute_hooks(expr)
         table = expr.as_table()
-        schema = table.schema()
-        for dtype in schema.types:
-            _check_type(dtype)
-        # JSON numbers cannot preserve arbitrary decimal precision end to end.
-        transport = table.select(
-            table[name].cast("string") if dtype.is_decimal() else table[name]
-            for name, dtype in schema.items()
-        )
-        result = self._query(
-            self.compile(transport, params=params, limit=limit, **kwargs)
-        )
-        arrow_schema = schema.to_pyarrow()
-        arrays = [
-            pa.array(
-                [_convert_value(row[index], dtype) for row in result.rows],
-                type=field.type,
+        result = self.client.query_parquet(
+            QueryRequest(
+                statement=self.compile(table, params=params, limit=limit, **kwargs),
+                catalog=self._catalog,
+                schema=self._database,
             )
-            for index, (dtype, field) in enumerate(zip(schema.types, arrow_schema))
-        ]
-        arrow_table = pa.Table.from_arrays(arrays, schema=arrow_schema)
+        )
+        arrow_table = pq.read_table(pa.BufferReader(result)).rename_columns(
+            table.columns
+        )
+        arrow_table = PyArrowData.convert_table(arrow_table, table.schema())
         return arrow_table.to_reader(max_chunksize=chunk_size)
 
     def execute(
@@ -217,54 +203,3 @@ class Backend(SQLBackend):
             frame = reader.read_all().to_pandas(integer_object_nulls=True)
         frame = PandasData.convert_table(frame, expr.as_table().schema())
         return expr.__pandas_result__(frame)
-
-
-def _check_type(dtype: dt.DataType, *, nested: bool = False) -> None:
-    if dtype.is_array():
-        _check_type(dtype.value_type, nested=True)
-    elif dtype.is_struct():
-        for child in dtype.types:
-            _check_type(child, nested=True)
-    elif (nested and dtype.is_decimal()) or not isinstance(
-        dtype,
-        (
-            dt.Numeric,
-            dt.Boolean,
-            dt.String,
-            dt.Date,
-            dt.Time,
-            dt.Timestamp,
-            dt.JSON,
-            dt.Null,
-        ),
-    ):
-        raise UnsupportedOperationError(
-            f"Altertable HTTP results do not support {dtype}"
-            + (" inside nested values" if nested else "")
-            + ". Cast it to string in the expression before executing."
-        )
-
-
-def _convert_value(value: Any, dtype: dt.DataType) -> Any:
-    if value is None:
-        return None
-    if dtype.is_decimal():
-        return Decimal(value)
-    if dtype.is_timestamp():
-        return pd.Timestamp(value)
-    if dtype.is_date():
-        return datetime.date.fromisoformat(value)
-    if dtype.is_time():
-        return datetime.time.fromisoformat(value)
-    if dtype.is_json():
-        return json.dumps(value)
-    if dtype.is_array():
-        return [_convert_value(item, dtype.value_type) for item in value]
-    if dtype.is_struct():
-        return {
-            name: _convert_value(
-                value[name] if isinstance(value, dict) else value[index], child
-            )
-            for index, (name, child) in enumerate(dtype.items())
-        }
-    return value
