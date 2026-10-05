@@ -11,12 +11,26 @@ python = "^3.9"
 httpx = "^0.28.1"
 dataclasses-json = "^0.6.7"
 pydantic = "^2.12.5"
+ibis-framework = {version = ">=12,<13", python = ">=3.10", optional = true}
+pandas = {version = ">=2.2,<4", python = ">=3.10", optional = true}
+pyarrow = {version = ">=18", python = ">=3.10", optional = true}
+pyarrow-hotfix = {version = ">=0.4", python = ">=3.10", optional = true}
+
+[tool.poetry.extras]
+ibis = ["ibis-framework", "pandas", "pyarrow", "pyarrow-hotfix"]
+
+[tool.poetry.plugins."ibis.backends"]
+altertable = "altertable_lakehouse.ibis"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.0.0"
 ruff = "^0.3.0"
 mypy = "^1.8.0"
 testcontainers = "<4.0"
+
+[[tool.mypy.overrides]]
+module = ["ibis.*", "pandas.*", "pyarrow.*"]
+ignore_missing_imports = true
 
 [build-system]
 requires = ["poetry-core"]

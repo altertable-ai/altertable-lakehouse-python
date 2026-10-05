@@ -179,7 +179,7 @@ def test_query_returns_stream_metadata_and_columns(client):
 
     assert metadata.values["statement"] == "SELECT 1"
     assert metadata.values["query_id"]
-    assert columns == ["1"]
+    assert columns == [{"name": "1", "type": "INTEGER"}]
     assert row_values == [[1]]
 
 def test_client_forwards_verify_false(monkeypatch, base_url):
@@ -213,3 +213,100 @@ def test_client_forwards_ssl_context(monkeypatch, base_url):
     )
 
     assert captured["verify"] is ssl_context
+
+
+def test_ibis_remote_query_shapes_and_precision(client):
+    ibis = pytest.importorskip("ibis")
+    from decimal import Decimal
+    import pyarrow as pa
+    import pandas as pd
+
+    backend = ibis.altertable.from_connection(client, catalog="memory", database="main")
+    amount = "12345678901234567890.123456789"
+    table = backend.sql(
+        f"SELECT n::INTEGER AS n, '{amount}'::DECIMAL(38,9) AS amount "
+        "FROM range(1, 4) AS numbers(n)"
+    )
+
+    frame = table.execute()
+    column = table.n.to_pyarrow()
+    scalar = table.amount.max().to_pyarrow()
+
+    assert isinstance(frame, pd.DataFrame)
+    assert frame.n.tolist() == [1, 2, 3]
+    assert frame.amount.tolist() == [Decimal(amount)] * 3
+    assert isinstance(column, (pa.Array, pa.ChunkedArray))
+    assert column.to_pylist() == [1, 2, 3]
+    assert scalar.as_py() == Decimal(amount)
+    assert table.n.sum().execute() == 6
+    assert table.filter(table.n < 0).to_pyarrow().schema == table.schema().to_pyarrow()
+    assert table.filter(table.n < 0).execute().empty
+
+
+def test_ibis_remote_schema_and_quoted_namespace(client):
+    ibis = pytest.importorskip("ibis")
+    import pandas as pd
+    backend = ibis.altertable.from_connection(client, catalog="memory", database="main")
+    client.query_all(models.QueryRequest(statement='CREATE SCHEMA "ibis schema"'))
+    client.query_all(models.QueryRequest(statement='CREATE TABLE "ibis schema"."odd table" (id INTEGER NOT NULL, label VARCHAR)'))
+    try:
+        client.query_all(models.QueryRequest(statement='INSERT INTO "ibis schema"."odd table" VALUES (1, \'one\'), (2, NULL)'))
+
+        table = backend.table("odd table", database=("memory", "ibis schema"))
+
+        assert table.schema() == ibis.schema({"id": "!int32", "label": "string"})
+        labels = table.order_by("id").execute().label
+        assert labels.iloc[0] == "one"
+        assert pd.isna(labels.iloc[1])
+        assert "memory" in backend.list_catalogs()
+        assert "ibis schema" in backend.list_databases(catalog="memory")
+        assert backend.list_tables(database=("memory", "ibis schema")) == ["odd table"]
+    finally:
+        client.query_all(models.QueryRequest(statement='DROP TABLE "ibis schema"."odd table"'))
+        client.query_all(models.QueryRequest(statement='DROP SCHEMA "ibis schema"'))
+
+
+def test_ibis_remote_join_aggregate_window_and_parameters(client):
+    ibis = pytest.importorskip("ibis")
+    backend = ibis.altertable.from_connection(client)
+    orders = backend.sql("SELECT * FROM (VALUES (1, 10), (1, 20), (2, 5)) AS orders(customer, amount)")
+    customers = backend.sql("SELECT * FROM (VALUES (1, 'one'), (2, 'two')) AS customers(id, name)")
+    minimum = ibis.param("int32")
+    totals = orders.join(customers, orders.customer == customers.id).group_by("name").aggregate(total=orders.amount.sum())
+    ranked = totals.mutate(position=ibis.row_number().over(order_by=totals.total.desc()))
+
+    result = ranked.filter(ranked.total > minimum).order_by("position").execute(params={minimum: 0}, limit=2)
+
+    assert result.name.tolist() == ["one", "two"]
+    assert result.total.tolist() == [30, 5]
+    assert result.position.tolist() == [0, 1]
+
+
+def test_ibis_remote_temporal_and_null_values(client):
+    ibis = pytest.importorskip("ibis")
+    import datetime
+    import pandas as pd
+
+    backend = ibis.altertable.from_connection(client)
+    table = backend.sql(
+        "SELECT DATE '2026-01-01' AS day, TIMESTAMPTZ '2026-01-01 01:02:03+00' AS moment, "
+        "[1, NULL]::INTEGER[] AS items, {'name': 'one', 'n': 1} AS record, NULL::INTEGER AS missing"
+    )
+
+    result = table.to_pyarrow().to_pylist()[0]
+
+    assert result["day"] == datetime.date(2026, 1, 1)
+    assert result["moment"] == pd.Timestamp("2026-01-01T01:02:03+00:00")
+    assert result["items"] == [1, None]
+    assert result["record"] == {"name": "one", "n": 1}
+    assert result["missing"] is None
+
+
+def test_ibis_describe_does_not_execute_data_and_preserves_query_errors(client):
+    ibis = pytest.importorskip("ibis")
+    backend = ibis.altertable.from_connection(client)
+
+    table = backend.sql("SELECT error('ibis execution failed') AS value")
+
+    with pytest.raises(errors.QueryError, match="ibis execution failed"):
+        table.execute()

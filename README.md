@@ -8,6 +8,58 @@ Official Python SDK for the Altertable Lakehouse API.
 pip install altertable-lakehouse
 ```
 
+### Ibis (Python 3.10 or newer)
+
+Requires Ibis 12. The base SDK still supports Python 3.9.
+
+```bash
+pip install 'altertable-lakehouse[ibis]'
+```
+
+Ibis compiles DuckDB SQL; the SDK executes it remotely over HTTP. No local
+DuckDB installation is needed.
+
+```python
+import ibis
+
+con = ibis.altertable.connect(
+    username="your_username",
+    password="your_password",
+    catalog="my_catalog",
+    database="my_schema",
+)
+
+orders = con.table("orders")
+totals = orders.group_by("customer_id").aggregate(total=orders.amount.sum())
+print(totals.execute())     # pandas DataFrame
+print(totals.to_pyarrow())  # Arrow table
+con.disconnect()
+```
+
+`database` means an Altertable schema. Use
+`con.table("orders", database=("catalog", "schema"))` for a qualified table.
+Discover data with `list_catalogs()`, `list_databases()`, and `list_tables()`.
+
+Reuse an existing SDK client with:
+
+```python
+con = ibis.altertable.from_connection(client, catalog="my_catalog", database="my_schema")
+```
+
+`connect()` accepts the SDK's credentials, environment variables, `base_url`,
+`timeout`, and `verify` options. `disconnect()` closes only clients it created.
+See the [runnable example](examples/ibis_queries.py) for SQL expressions,
+parameters, compilation, and Arrow output.
+
+Limitations:
+
+* Results are buffered in memory, including `to_pyarrow_batches()`.
+* Nested decimals, binary, map, interval, UUID, and geospatial results require
+  an explicit cast to string. Top-level decimals retain their precision.
+* Memtables, UDFs, table/view mutations, and raw SQL cursors are unsupported.
+  Use the SDK's query/upload methods for writes.
+* URL-based `ibis.connect()` is unsupported. Use the connection methods above.
+
 ## Usage
 
 ### Initialization

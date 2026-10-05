@@ -26,6 +26,7 @@ from .errors import (
     NetworkError,
     TimeoutError,
     ParseError,
+    QueryError,
     ApiError,
     ConfigurationError,
     AltertableLakehouseError,
@@ -227,9 +228,12 @@ class Client:
                         continue
                     line_index += 1
                     try:
-                        return json.loads(line)
+                        item = json.loads(line)
                     except json.JSONDecodeError as exc:
                         raise ParseError("Failed to parse NDJSON line", line_index, line) from exc
+                    if line_index > 1 and isinstance(item, dict) and isinstance(item.get("error"), str):
+                        raise QueryError(item["error"], line_index)
+                    return item
                 return None
 
             first_item = next_item()
@@ -261,6 +265,8 @@ class Client:
                         if item is None:
                             break
                         yield item
+                except httpx.RequestError as e:
+                    self._handle_error(e)
                 finally:
                     res.close()
 

@@ -33,3 +33,11 @@ class BadRequestError(ApiError):
 
 class ConfigurationError(AltertableLakehouseError): 
     pass
+
+
+class QueryError(AltertableLakehouseError):
+    """A query failed after the server started its NDJSON response."""
+
+    def __init__(self, message: str, line_index: int):
+        super().__init__(f"{message} at line {line_index}")
+        self.line_index = line_index
