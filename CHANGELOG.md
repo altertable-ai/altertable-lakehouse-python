@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.5.1](https://github.com/altertable-ai/altertable-lakehouse-python/compare/altertable-lakehouse-v0.5.0...altertable-lakehouse-v0.5.1) (2026-10-05)
+
+
+### Documentation
+
+* **marimo:** add a reactive lakehouse notebook ([#29](https://github.com/altertable-ai/altertable-lakehouse-python/issues/29)) ([5e05bcf](https://github.com/altertable-ai/altertable-lakehouse-python/commit/5e05bcfaab8cb4df2719c0c6e4ab2fe98d7db2b7))
+
 ## [0.5.0](https://github.com/altertable-ai/altertable-lakehouse-python/compare/altertable-lakehouse-v0.4.0...altertable-lakehouse-v0.5.0) (2026-10-05)
 
 
