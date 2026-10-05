@@ -30,6 +30,17 @@ con.disconnect()
 `database` means schema. Queries run remotely; results are buffered in memory.
 Writes use the SDK directly. See the [runnable example](examples/ibis_queries.py).
 
+### marimo
+
+Use the Ibis connection with `mo.sql(query, engine=con)`. Try the
+[notebook](examples/marimo_notebook.py) with `ALTERTABLE_USERNAME` and
+`ALTERTABLE_PASSWORD` set:
+
+```bash
+pip install -e '.[ibis]' marimo
+marimo edit examples/marimo_notebook.py
+```
+
 ## Usage
 
 ### Initialization
