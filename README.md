@@ -41,6 +41,8 @@ pip install -e '.[ibis]' marimo
 marimo edit examples/marimo_notebook.py
 ```
 
+Use marimo's Datasources panel to add SQL cells for your own tables.
+
 ## Usage
 
 ### Initialization

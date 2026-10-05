@@ -24,7 +24,9 @@ def _(ibis, os):
 
 @app.cell
 def _(mo):
-    minimum = mo.ui.slider(0, 40, value=10, label="Minimum customer total")
+    minimum = mo.ui.slider(
+        0, 40, value=10, label="Minimum customer total", debounce=True, show_value=True
+    )
     minimum
     return (minimum,)
 
