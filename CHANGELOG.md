@@ -32,6 +32,7 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
+* Support named and positional query bind values through `QueryRequest.params`.
 * Add an optional Ibis backend with native Parquet results through `Client.query_parquet`.
 * Surface errors received during NDJSON query streaming as `QueryError`.
 * Add `Client.upload` with typed upload modes and support for file streams.
