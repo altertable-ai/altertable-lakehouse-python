@@ -62,7 +62,10 @@ client = Client(username="your_username", password="your_password", verify=False
 from altertable_lakehouse.models import QueryRequest
 
 # Stream rows (good for large datasets)
-req = QueryRequest(statement="SELECT * FROM my_table")
+req = QueryRequest(
+    statement="SELECT * FROM my_table WHERE age >= $min_age",
+    params={"min_age": 25},
+)
 metadata, columns, row_iterator = client.query(req)
 print(metadata.values)
 print(columns)

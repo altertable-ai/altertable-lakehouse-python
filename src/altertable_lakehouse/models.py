@@ -58,6 +58,7 @@ class QueryRequest(BaseModel):
     sanitize: Optional[bool] = None
     limit: Optional[int] = None
     offset: Optional[int] = None
+    params: Optional[Union[Dict[str, Union[str, int, float, bool, None]], List[Union[str, int, float, bool, None]]]] = None
     timezone: Optional[str] = None
     ephemeral: Optional[bool] = None
     visible: Optional[bool] = None

@@ -46,6 +46,14 @@ def test_query_all(client):
     assert isinstance(res.columns, list)
     assert isinstance(res.rows, list)
 
+
+def test_query_request_serializes_named_and_positional_bind_values():
+    named = models.QueryRequest(statement="SELECT $min_age", params={"min_age": 25})
+    positional = models.QueryRequest(statement="SELECT $1", params=[25])
+
+    assert named.model_dump(exclude_none=True)["params"] == {"min_age": 25}
+    assert positional.model_dump(exclude_none=True)["params"] == [25]
+
 def test_upsert_sends_primary_key_without_unsupported_mode(client):
     captured = {}
 
