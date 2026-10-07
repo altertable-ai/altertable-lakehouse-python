@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.6.0](https://github.com/altertable-ai/altertable-lakehouse-python/compare/altertable-lakehouse-v0.5.1...altertable-lakehouse-v0.6.0) (2026-10-07)
+
+
+### Features
+
+* **query:** support bind parameters ([#31](https://github.com/altertable-ai/altertable-lakehouse-python/issues/31)) ([8d5faf3](https://github.com/altertable-ai/altertable-lakehouse-python/commit/8d5faf3080bfcc9c1cee4d014bfa7ea52f4f05a1))
+
 ## [0.5.1](https://github.com/altertable-ai/altertable-lakehouse-python/compare/altertable-lakehouse-v0.5.0...altertable-lakehouse-v0.5.1) (2026-10-05)
 
 
