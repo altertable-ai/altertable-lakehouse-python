@@ -348,7 +348,11 @@ def test_ibis_describe_does_not_execute_data_and_preserves_query_errors(client):
     ibis = pytest.importorskip("ibis")
     backend = ibis.altertable.from_connection(client)
 
-    table = backend.sql("SELECT error('ibis execution failed') AS value")
+    # Give the always-failing expression a supported result type so execution
+    # reaches the remote query instead of failing local schema validation.
+    table = backend.sql(
+        "SELECT CAST(error('ibis execution failed') AS BIGINT) AS value"
+    )
 
     with pytest.raises(errors.ApiError, match="ibis execution failed"):
         table.execute()
