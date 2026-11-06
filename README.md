@@ -111,9 +111,8 @@ with open("data.csv", "rb") as f:
     )
 ```
 
-`cursor_field` is optional. On a primary-key collision, the row with the
-higher cursor wins; ties leave the stored row unchanged. Composite cursor
-fields compare left to right, and `NULL` sorts lower than any non-null value.
+Optional `cursor_field`: higher cursors win key collisions; ties keep existing rows.
+Composite cursors compare left to right, with `NULL` lowest.
 
 ### Upload
 
