@@ -88,6 +88,9 @@ class Client:
             return
         if response.status_code == 401:
             raise AuthError("Unauthorized", response.status_code)
+        # /query uses stream=True: error bodies must be read before .text.
+        # Successful responses return above and remain lazy.
+        response.read()
         if response.status_code == 400:
             raise BadRequestError(response.text, response.status_code)
         raise ApiError(response.text, response.status_code)
