@@ -34,6 +34,9 @@ from .errors import (
 )
 
 
+UploadContent = Union[bytes, BinaryIO, Iterable[bytes]]
+
+
 class Client:
     def __init__(
         self,
@@ -125,7 +128,7 @@ class Client:
         catalog: str,
         schema: str,
         table: str,
-        content: Union[bytes, BinaryIO, Iterable[bytes]],
+        content: UploadContent,
         primary_key: str,
         cursor_field: Optional[str] = None,
         content_type: Optional[str] = None,
@@ -156,7 +159,7 @@ class Client:
         schema: str,
         table: str,
         mode: UploadMode,
-        content: Union[bytes, BinaryIO, Iterable[bytes]],
+        content: UploadContent,
         content_type: Optional[str] = None,
     ) -> None:
         """Upload CSV, JSON, or Parquet bytes using the requested table mode."""
