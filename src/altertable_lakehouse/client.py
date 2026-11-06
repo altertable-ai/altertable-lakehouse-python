@@ -19,6 +19,7 @@ from .models import (
     QueryMetadata,
     QueryResult,
     UploadMode,
+    ComputeSize,
 )
 from .errors import (
     AuthError,
@@ -31,6 +32,9 @@ from .errors import (
     ConfigurationError,
     AltertableLakehouseError,
 )
+
+
+UploadContent = Union[bytes, BinaryIO, Iterable[bytes]]
 
 
 class Client:
@@ -126,8 +130,10 @@ class Client:
         catalog: str,
         schema: str,
         table: str,
-        content: bytes,
+        content: UploadContent,
         primary_key: str,
+        cursor_field: Optional[str] = None,
+        content_type: Optional[str] = None,
     ) -> None:
         params = {
             "catalog": catalog,
@@ -135,11 +141,15 @@ class Client:
             "table": table,
             "primary_key": primary_key,
         }
+        if cursor_field is not None:
+            params["cursor_field"] = cursor_field
+        headers = {"Content-Type": content_type} if content_type else None
         try:
             res = self._client.post(
                 "/upsert",
                 params=params,
                 content=content,
+                headers=headers,
             )
             self._check_response(res)
         except httpx.RequestError as e:
@@ -151,7 +161,7 @@ class Client:
         schema: str,
         table: str,
         mode: UploadMode,
-        content: Union[bytes, BinaryIO, Iterable[bytes]],
+        content: UploadContent,
         content_type: Optional[str] = None,
     ) -> None:
         """Upload CSV, JSON, or Parquet bytes using the requested table mode."""
@@ -208,6 +218,9 @@ class Client:
             self._handle_error(e)
 
     def query(self, request: QueryRequest) -> Tuple[QueryMetadata, list[Any], Iterator[Any]]:
+        if request.compute_size == ComputeSize.AUTO and request.session_id:
+            raise ConfigurationError("compute_size AUTO cannot be combined with session_id")
+
         payload = request.model_dump(exclude_none=True, by_alias=True)
         res: Optional[httpx.Response] = None
         try:
@@ -234,9 +247,13 @@ class Client:
                     except json.JSONDecodeError as exc:
                         raise ParseError("Failed to parse NDJSON line", line_index, line) from exc
                     if line_index > 1 and isinstance(item, dict) and isinstance(item.get("error"), str):
-                        raise QueryError(item["error"], line_index)
+                        raise QueryError(item["error"], line_index, json.dumps(item))
                     return item
                 return None
+
+            def raise_if_stream_error(item: Any) -> None:
+                if isinstance(item, dict) and isinstance(item.get("error"), str):
+                    raise QueryError(item["error"], line_index, json.dumps(item))
 
             first_item = next_item()
             if first_item is None:
@@ -251,6 +268,7 @@ class Client:
             buffered_row: Optional[Any] = None
             second_item = next_item()
             if second_item is not None:
+                raise_if_stream_error(second_item)
                 if isinstance(second_item, list):
                     columns = second_item
                 elif isinstance(second_item, dict) and isinstance(second_item.get("columns"), list):
@@ -266,6 +284,7 @@ class Client:
                         item = next_item()
                         if item is None:
                             break
+                        raise_if_stream_error(item)
                         yield item
                 except httpx.RequestError as e:
                     self._handle_error(e)
