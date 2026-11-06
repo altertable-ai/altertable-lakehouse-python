@@ -88,6 +88,8 @@ class Client:
             return
         if response.status_code == 401:
             raise AuthError("Unauthorized", response.status_code)
+        # Read streamed error bodies before accessing .text.
+        response.read()
         if response.status_code == 400:
             raise BadRequestError(response.text, response.status_code)
         raise ApiError(response.text, response.status_code)

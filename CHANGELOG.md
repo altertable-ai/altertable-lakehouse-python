@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## Unreleased
+
+### Fixed
+
+* Preserve SDK HTTP errors and their response bodies for streamed queries instead of raising `httpx.ResponseNotRead`.
+
 ## [0.5.1](https://github.com/altertable-ai/altertable-lakehouse-python/compare/altertable-lakehouse-v0.5.0...altertable-lakehouse-v0.5.1) (2026-10-05)
 
 
