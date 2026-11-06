@@ -8,6 +8,23 @@ All notable changes to this project will be documented in this file.
 
 * Preserve SDK HTTP errors and their response bodies for streamed queries instead of raising `httpx.ResponseNotRead`.
 
+## [1.0.0](https://github.com/altertable-ai/altertable-lakehouse-python/compare/altertable-lakehouse-v0.5.1...altertable-lakehouse-v1.0.0) (2026-11-06)
+
+
+### ⚠ BREAKING CHANGES
+
+* **api:** align lakehouse client with v0.13.0 ([#26](https://github.com/altertable-ai/altertable-lakehouse-python/issues/26))
+
+### Features
+
+* **api:** align lakehouse client with v0.13.0 ([#26](https://github.com/altertable-ai/altertable-lakehouse-python/issues/26)) ([9865f3c](https://github.com/altertable-ai/altertable-lakehouse-python/commit/9865f3c6653a0fd25cd1e4b9ff5682e29762ebe2))
+* **query:** support bind parameters ([#31](https://github.com/altertable-ai/altertable-lakehouse-python/issues/31)) ([8d5faf3](https://github.com/altertable-ai/altertable-lakehouse-python/commit/8d5faf3080bfcc9c1cee4d014bfa7ea52f4f05a1))
+
+
+### Bug Fixes
+
+* **query:** read streamed HTTP error bodies before decoding ([#35](https://github.com/altertable-ai/altertable-lakehouse-python/issues/35)) ([8d20fca](https://github.com/altertable-ai/altertable-lakehouse-python/commit/8d20fcafb91b7bcc6ddc5ff0e7525bd1b6ed0813))
+
 ## [0.5.1](https://github.com/altertable-ai/altertable-lakehouse-python/compare/altertable-lakehouse-v0.5.0...altertable-lakehouse-v0.5.1) (2026-10-05)
 
 
